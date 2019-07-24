@@ -1,0 +1,4 @@
+scanTopicName: /mybot/laser/scan
+scanTopicQueueSize: 10
+pubTopicName: /cmd_vel
+pubTopicQueueSize: 5
