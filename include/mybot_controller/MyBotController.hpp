@@ -46,7 +46,7 @@ private:
 	geometry_msgs::Twist uturn();
 
 	//left turn function
-	geometry_msgs::Twist leftTurn();
+	geometry_msgs::Twist leftTurn(float leftTurnHyp);
 
 	//right turn function
 	geometry_msgs::Twist rightTurn();
@@ -55,7 +55,12 @@ private:
 	geometry_msgs::Twist centerHallway(float left, float right);
 
 	//theta for turns
-	float theta = 20. * M_PI / 180.;
+	float theta = 10. * M_PI / 180.;
+
+	//previous width
+	float prevWidth;
+	//count, to determine first call to centerHallway
+	int count;
 };
 
 } /* namespace */
