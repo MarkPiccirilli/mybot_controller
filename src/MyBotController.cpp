@@ -54,12 +54,10 @@ void MyBotController::scanCallback(const sensor_msgs::LaserScan& msg) {
 	//create a vector of the ranges from the Laser Scan msg
 	std::vector<float> ranges = msg.ranges;
 	
-	/*
 	int size = 0;
 	for(float i : ranges) {
 		size++;
 	}
-	*/
 
 	float left = ranges[719];
 	float right = ranges[0];
@@ -72,19 +70,19 @@ void MyBotController::scanCallback(const sensor_msgs::LaserScan& msg) {
 	//set uturn distance
 	float uturnDistance; 
 	if(left > 1.5 * right) {
-		uturnDistance = 2 * right / 3;
+		uturnDistance = 2 * right / 4;
 	}
 	else if(right > 1.5 * left) {
-		uturnDistance = 2 * left / 3;
+		uturnDistance = 2 * left / 4;
 	}
 	else {
-		uturnDistance = (left + right) / 3;
+		uturnDistance = (left + right) / 4;
 	}
 
 	ROS_INFO_STREAM("uturnDistance: " << uturnDistance);
 
 	//the min max and step data was printed and used to calculate the 120 and 600 indexes to fined the left and right wall distance
-	//ROS_INFO_STREAM("min: " << msg.angle_min << " max: " << msg.angle_max << " step: " << msg.angle_increment << " size: " << size << std::endl);
+	ROS_INFO_STREAM("min: " << msg.angle_min << " max: " << msg.angle_max << " step: " << msg.angle_increment << " size: " << size << std::endl);
 
 	ROS_INFO_STREAM("left: " << left << " Right: " << right << " Front: " << front << std::endl);
 	
@@ -122,6 +120,11 @@ void MyBotController::scanCallback(const sensor_msgs::LaserScan& msg) {
 
 geometry_msgs::Twist MyBotController::uturn() {
 	geometry_msgs::Twist velMsg;
+	/* //husky
+	velMsg.angular.z = -2.;
+	*/
+
+	//my_bot
 	velMsg.angular.z = -2.;
 
 	return velMsg;
@@ -129,22 +132,36 @@ geometry_msgs::Twist MyBotController::uturn() {
 
 geometry_msgs::Twist MyBotController::leftTurn(float leftTurnHyp) {
 	geometry_msgs::Twist velMsg;
+
+	/* //husky
 	velMsg.linear.x = .15;
 	velMsg.angular.z = 2./leftTurnHyp;
+	*/
 
+	//my_bot
+	velMsg.linear.x = .1;
+	velMsg.angular.z = 1./leftTurnHyp;
+	
 	return velMsg;
 }
 
 geometry_msgs::Twist MyBotController::rightTurn() {
 	geometry_msgs::Twist velMsg;
+	/* //husky
 	velMsg.linear.x = 0;
 	velMsg.angular.z = -.8;
+	*/
 
+	//my_bot
+	velMsg.linear.x = 0;
+	velMsg.angular.z = -.8;
+	
 	return velMsg;
 }
 
 geometry_msgs::Twist MyBotController::centerHallway(float left, float right) {
-	
+
+	/*	
 	//husky calibration constants. Must be modified experimentally.
 	float linearReflectionVel = .6;
 	float angularReflectionFactor = 2;
@@ -154,24 +171,24 @@ geometry_msgs::Twist MyBotController::centerHallway(float left, float right) {
 	float angularSideFactor = .09;
 	float maxSideDistance = 4;
 	float centerSpace = (left + right) / 8; 
- 
-	/*
+ 	*/
+
 	//calibration constants.  Must be modified experimentally.
-	float linearReflectionVel = .15;
-	float angularReflectionFactor = .25;
-	float linearCenterVel = .15;
-	float angularCenterVel = 0.;
-	float linearSideVel = .1;
-	float angularSideFactor = .005;
-	float maxSideDistance = 3;
+	float linearReflectionVel = .2;
+	float angularReflectionFactor = .6;
+	//float linearCenterVel = .6;
+	//float angularCenterVel = 0.;
+	float linearSideVel = .25;
+	float angularSideFactor = .15;
+	float maxSideDistance = 4;
 	float centerSpace = (left + right) / 8; 
-	*/
+	
 
 	geometry_msgs::Twist velMsg;
 
 	//the following code creates a false wall on a right turn that should be skipped	
 	ROS_INFO_STREAM("prev width: " << prevWidth << "count: " << count << std::endl); //testing code
-	if(left + right > 1.2 * prevWidth && front > prevWidth) {
+	if(left + right > 1.2 * prevWidth) { // && front > prevWidth) {
 		right = prevWidth - left;
 	}
 	else {
