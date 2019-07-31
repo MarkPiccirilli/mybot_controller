@@ -1,19 +1,25 @@
 <?xml version="1.0"?>
 <launch>
-	<arg name="use_sim_time" default="true"/>
-	<arg name="world" default="hallway1"/>
+	<!--arg name="use_sim_time" default="true"/-->
+	<arg name="world" default="maze3"/>
+	<!--arg name="x" default="0"/-->
+	<!--arg name="y" default="0"/-->
+	<!--arg name="yaw" default="0"/-->
 
-	<group if="$(arg use_sim_time)">
+	<!--group if="$(arg use_sim_time)">
 		<param name="/use_sim_time" value="true"/>
-	</group>
+	</group-->
 
 	<include file="$(find mybot_gazebo)/launch/mybot_world.launch">	
                 <arg name="world_pass" value="$(arg world)"/>
+		<!--arg name="x" value="$(arg x)"/-->
+		<!--arg name="y" value="$(arg y)"/-->
+		<!--arg name="yaw" value="$(arg yaw)"/-->
         </include>
 
 	<node name="mybot_controller" pkg="mybot_controller" type="mybot_controller" output="screen">
 		<rosparam command="load" file="$(find mybot_controller)/config/default.yaml"/>
 	</node>
 
-	<node name="rviz" pkg="rviz" type="rviz" output="screen"/>
+	<node name="rviz" pkg="rviz" type="rviz" output="screen"/> 
 </launch>
