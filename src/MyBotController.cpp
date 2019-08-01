@@ -61,7 +61,7 @@ void MyBotController::scanCallback(const sensor_msgs::LaserScan& msg) {
 
 	float left = ranges[719];
 	float right = ranges[0];
-	float front = ranges[360];
+	float front = ranges[359];
 	float leftTurnHyp = ranges[680]; //10 degrees
 	float leftTurnHypLong = ranges[440]; //70 degrees
 	//float rightTurnHyp = ranges[80]; //20 degrees
@@ -97,8 +97,9 @@ void MyBotController::scanCallback(const sensor_msgs::LaserScan& msg) {
 	ROS_INFO_STREAM("leftTurnHyp: " << leftTurnHyp << " leftTurnHypLong: " << leftTurnHypLong << " left * cos(theta): " << left * cos(theta)); //testing code
 	ROS_INFO_STREAM(" diff: " << leftTurnHyp - (left * cos(theta)) << std::endl); //testing code
 
-	//if turn, turn otherwise move to hallway center
-	if(front < uturnDistance) {
+	//robot decision condtionals
+	float skipUturnFactor = 3.; //if a turn should be made instead of uturnr
+	if(front < uturnDistance && left + right > skipUturnFactor * uturnDistance * front) {
 		//count = 0;
 		ROS_INFO("U-TURN"); //testing code
 		velMsg = uturn(left, right, leftUturnGuide, rightUturnGuide);
@@ -178,7 +179,7 @@ geometry_msgs::Twist MyBotController::centerHallway(float left, float right) {
 
 	//husky calibration constants. Must be modified experimentally.
 	float linearReflectionVel = .6;
-	float angularReflectionFactor = 2;
+	float angularReflectionFactor = 1.7;
 	float linearCenterVel = .6;
 	float angularCenterVel = 0.;
 	float linearSideVel = .4;
@@ -202,7 +203,7 @@ geometry_msgs::Twist MyBotController::centerHallway(float left, float right) {
 
 	//the following code creates a false wall on a right turn that should be skipped	
 	ROS_INFO_STREAM("prev width: " << prevWidth << "count: " << count << std::endl); //testing code
-	if(left + right > 1.2 * prevWidth) { // && front > prevWidth) {
+	if(left + right > 1.05 * prevWidth) { 
 		right = prevWidth - left;
 	}
 	else {
