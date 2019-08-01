@@ -43,7 +43,7 @@ private:
 	bool side;
 
 	//uturn function 
-	geometry_msgs::Twist uturn();
+	geometry_msgs::Twist uturn(float left, float right, float leftUturnGuide, float rightUturnGuide);
 
 	//left turn function
 	geometry_msgs::Twist leftTurn(float leftTurnHyp);
