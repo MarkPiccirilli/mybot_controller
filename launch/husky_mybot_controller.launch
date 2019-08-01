@@ -23,5 +23,7 @@
 		<rosparam command="load" file="$(find mybot_controller)/config/husky.yaml"/>
 	</node>
 
+	<node name="gmapping" pkg="gmapping" type="slam_gmapping" output="screen"/>
+
 	<node name="rviz" pkg="rviz" type="rviz" output="screen"/>
 </launch>
