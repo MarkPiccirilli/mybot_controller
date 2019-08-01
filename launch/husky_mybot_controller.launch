@@ -6,6 +6,7 @@
 	<arg name="y" default="0.0"/>
 	<arg name="z" default="0.0"/>
   	<arg name="yaw" default="0.0"/>
+	<arg name="scan" default="scan"/>
 
 	<group if="$(arg use_sim_time)">
 		<param name="/use_sim_time" value="true"/>
@@ -23,7 +24,7 @@
 		<rosparam command="load" file="$(find mybot_controller)/config/husky.yaml"/>
 	</node>
 
-	<node name="gmapping" pkg="gmapping" type="slam_gmapping" output="screen"/>
+	<node name="gmapping" pkg="gmapping" type="slam_gmapping" output="screen" args="-scan $(arg scan)"/>
 
 	<node name="rviz" pkg="rviz" type="rviz" output="screen"/>
 </launch>
