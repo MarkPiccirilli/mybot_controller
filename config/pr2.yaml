@@ -1,0 +1,4 @@
+scanTopicName: /base_scan
+scanTopicQueueSize: 10
+pubTopicName: /base_controller/command
+pubTopicQueueSize: 5

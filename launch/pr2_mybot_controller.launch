@@ -1,0 +1,25 @@
+<?xml version="1.0"?>
+<launch>
+	<arg name="use_sim_time" default="true"/>
+	<arg name="world" default="hallway1"/>
+	<arg name="x" default="0.0"/>
+	<arg name="y" default="0.0"/>
+  	<arg name="yaw" default="0.0"/>
+
+	<group if="$(arg use_sim_time)">
+		<param name="/use_sim_time" value="true"/>
+	</group>
+
+	<include file="$(find pr2_gazebo)/launch/pr2_empty_world.launch">
+                <arg name="world_name" value="/usr/share/gazebo-7/worlds/$(arg world).world"/>
+		<arg name="x" value="$(arg x)"/>
+		<arg name="y" value="$(arg y)"/>
+  		<arg name="yaw" value="$(arg yaw)"/>
+        </include>
+
+	<node name="mybot_controller" pkg="mybot_controller" type="mybot_controller" output="screen">
+		<rosparam command="load" file="$(find mybot_controller)/config/pr2.yaml"/>
+	</node>
+
+	<node name="rviz" pkg="rviz" type="rviz" output="screen"/>
+</launch>
