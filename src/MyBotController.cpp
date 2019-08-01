@@ -66,17 +66,20 @@ void MyBotController::scanCallback(const sensor_msgs::LaserScan& msg) {
 	float leftTurnHypLong = ranges[440]; //70 degrees
 	//float rightTurnHyp = ranges[80]; //20 degrees
 	float tolerance = (left + right) / 2.5;
+	float leftUturnGuide = ranges[520]; //50 degrees
+	float rightUturnGuide = ranges[200]; //50 degrees
 	
 	//set uturn distance
 	float uturnDistance; 
+	float uturnDistanceFactor = 1./2.8;
 	if(left > 1.5 * right) {
-		uturnDistance = 2 * right / 4;
+		uturnDistance = 2. * right * uturnDistanceFactor;
 	}
 	else if(right > 1.5 * left) {
-		uturnDistance = 2 * left / 4;
+		uturnDistance = 2. * left * uturnDistanceFactor;
 	}
 	else {
-		uturnDistance = (left + right) / 4;
+		uturnDistance = (left + right) * uturnDistanceFactor;
 	}
 
 	ROS_INFO_STREAM("uturnDistance: " << uturnDistance);
@@ -95,7 +98,12 @@ void MyBotController::scanCallback(const sensor_msgs::LaserScan& msg) {
 	ROS_INFO_STREAM(" diff: " << leftTurnHyp - (left * cos(theta)) << std::endl); //testing code
 
 	//if turn, turn otherwise move to hallway center
-	if(leftTurnHyp > left * cos(theta) + tolerance || (leftTurnHyp > 1.5 * leftTurnHypLong && leftTurnHypLong > 1.1 * front)) { // && (leftTurnHyp > 1.5 * front || leftTurnHyp > 1.5 * right))) {
+	if(front < uturnDistance) {
+		//count = 0;
+		ROS_INFO("U-TURN"); //testing code
+		velMsg = uturn(left, right, leftUturnGuide, rightUturnGuide);
+	}
+	else if(leftTurnHyp > left * cos(theta) + tolerance || (leftTurnHyp > 1.5 * leftTurnHypLong && leftTurnHypLong > 1.1 * front)) { // && (leftTurnHyp > 1.5 * front || leftTurnHyp > 1.5 * right))) {
 		count = 0;
 		ROS_INFO("LEFT TURN\n"); //testing code
 		velMsg = leftTurn(leftTurnHyp);
@@ -105,11 +113,6 @@ void MyBotController::scanCallback(const sensor_msgs::LaserScan& msg) {
 		ROS_INFO("RIGHT TURN\n"); //testing code
 		velMsg = rightTurn();
 	}
-	else if(front < uturnDistance) {
-		count = 0;
-		ROS_INFO("U-TURN"); //testing code
-		velMsg = uturn();
-	}
 	else {
 		ROS_INFO("CENTER HALLWAY\n"); //testing code
 		velMsg = centerHallway(left, right);
@@ -118,30 +121,42 @@ void MyBotController::scanCallback(const sensor_msgs::LaserScan& msg) {
 	pubCmdVel.publish(velMsg);
 }
 
-geometry_msgs::Twist MyBotController::uturn() {
+geometry_msgs::Twist MyBotController::uturn(float left, float right, float leftUturnGuide, float rightUturnGuide) {
 	geometry_msgs::Twist velMsg;
-	/* //husky
-	velMsg.angular.z = -2.;
-	*/
+	 //husky
+	if(left > 3 * right) {
+		velMsg.angular.z = 3.;
+	}
+	else if( right > 3 * left) {
+		velMsg.angular.z = -3.;
+	}
+	else if(leftUturnGuide > rightUturnGuide) {
+		velMsg.angular.z = 3.;
+	}
+	else {
+		velMsg.angular.z = -3.;
+	}
+	velMsg.linear.x = -.7;
 
+	/*
 	//my_bot
 	velMsg.angular.z = -2.;
-
+	*/
 	return velMsg;
 }
 
 geometry_msgs::Twist MyBotController::leftTurn(float leftTurnHyp) {
 	geometry_msgs::Twist velMsg;
 
-	/* //husky
-	velMsg.linear.x = .15;
+	 //husky
+	velMsg.linear.x = .25;
 	velMsg.angular.z = 2./leftTurnHyp;
-	*/
-
+	
+	/*
 	//my_bot
 	velMsg.linear.x = .1;
 	velMsg.angular.z = 1./leftTurnHyp;
-	
+	*/
 	return velMsg;
 }
 
@@ -161,7 +176,6 @@ geometry_msgs::Twist MyBotController::rightTurn() {
 
 geometry_msgs::Twist MyBotController::centerHallway(float left, float right) {
 
-	/*	
 	//husky calibration constants. Must be modified experimentally.
 	float linearReflectionVel = .6;
 	float angularReflectionFactor = 2;
@@ -171,8 +185,8 @@ geometry_msgs::Twist MyBotController::centerHallway(float left, float right) {
 	float angularSideFactor = .09;
 	float maxSideDistance = 4;
 	float centerSpace = (left + right) / 8; 
- 	*/
 
+	/*
 	//calibration constants.  Must be modified experimentally.
 	float linearReflectionVel = .2;
 	float angularReflectionFactor = .6;
@@ -182,7 +196,7 @@ geometry_msgs::Twist MyBotController::centerHallway(float left, float right) {
 	float angularSideFactor = .15;
 	float maxSideDistance = 4;
 	float centerSpace = (left + right) / 8; 
-	
+	*/
 
 	geometry_msgs::Twist velMsg;
 
@@ -192,7 +206,7 @@ geometry_msgs::Twist MyBotController::centerHallway(float left, float right) {
 		right = prevWidth - left;
 	}
 	else {
-		if(count == 100 || prevWidth == INFINITY) {
+		if(count % 100 == 0 || prevWidth == INFINITY) {
 			prevWidth = left + right;
 		}
 		else if(count > 100) {
