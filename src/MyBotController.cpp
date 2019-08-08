@@ -180,7 +180,7 @@ geometry_msgs::Twist MyBotController::uturn(float left, float right, float leftU
 geometry_msgs::Twist MyBotController::leftTurn(float leftTurnHyp) {
 	geometry_msgs::Twist velMsg;
 
-	velMsg.linear.x = .45;
+	velMsg.linear.x = .5;
 	velMsg.angular.z = 0.9;
 	
 	return velMsg;
@@ -208,11 +208,11 @@ geometry_msgs::Twist MyBotController::centerHallway(float left, float right) {
 
 	//husky calibration constants. Must be modified experimentally.
 	float linearReflectionVel = .75;
-	float angularReflectionFactor = 1.0;
+	float angularReflectionFactor = 1.;
 	float linearCenterVel = .9;
 	float angularCenterVel = 0.;
-	float linearSideVel = .65;
-	float angularSideFactor = .09;
+	float linearSideVel = .6;
+	float angularSideFactor = .11;
 	float maxSideDistance = 4;
 	float centerSpace = (left + right) / 8; 
 
