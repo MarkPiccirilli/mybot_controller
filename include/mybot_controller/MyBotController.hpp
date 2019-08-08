@@ -51,6 +51,9 @@ private:
 	//right turn function
 	geometry_msgs::Twist rightTurn();
 
+	//left uturn assist fucntion
+	geometry_msgs::Twist leftUturnAssist();
+
 	//hallway centering function
 	geometry_msgs::Twist centerHallway(float left, float right);
 
@@ -60,7 +63,8 @@ private:
 	//previous width
 	float prevWidth;
 	//count, to determine first call to centerHallway
-	int count;
+	int wideCount;
+	int narrowCount;
 };
 
 } /* namespace */
