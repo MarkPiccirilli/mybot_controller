@@ -1,4 +1,4 @@
 scanTopicName: /scan
-scanTopicQueueSize: 10
+scanTopicQueueSize: 1
 pubTopicName: /cmd_vel
-pubTopicQueueSize: 5
+pubTopicQueueSize: 1 
