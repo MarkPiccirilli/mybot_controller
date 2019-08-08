@@ -11,7 +11,8 @@ MyBotController::MyBotController(ros::NodeHandle& nodeHandle) :
 		ros::requestShutdown();
 	}
 
-	count = 0;
+	wideCount = 0;
+	narrowCount = 0;
 	prevWidth = INFINITY;
 
 	//launch subscriber
@@ -59,6 +60,7 @@ void MyBotController::scanCallback(const sensor_msgs::LaserScan& msg) {
 		size++;
 	}
 
+	/* // 180 view
 	float left = ranges[719];
 	float right = ranges[0];
 	float front = ranges[359];
@@ -68,18 +70,40 @@ void MyBotController::scanCallback(const sensor_msgs::LaserScan& msg) {
 	float tolerance = (left + right) / 2.5;
 	float leftUturnGuide = ranges[520]; //50 degrees
 	float rightUturnGuide = ranges[200]; //50 degrees
-	
+	*/
+
+	float left = ranges[119];
+	float right = ranges[600];
+	float front = ranges[359];
+	float leftTurnHyp = ranges[145]; //10 degrees
+	float leftTurnHypLong = ranges[306]; //70 degrees
+	//float rightTurnHyp = ranges[80]; //20 degrees
+	float tolerance = (left + right) / 2.5;
+	float leftUturnGuide = ranges[253]; //50 degrees
+	float rightUturnGuide = ranges[456]; //50 degrees
+
 	//set uturn distance
 	float uturnDistance; 
 	float uturnDistanceFactor = 1./2.8;
-	if(left > 1.5 * right) {
+	bool cornerUturnBool = false; //for corner condition
+	if(left > 2. * right) {
 		uturnDistance = 2. * right * uturnDistanceFactor;
 	}
-	else if(right > 1.5 * left) {
+	else if(right > 2. * left) {
 		uturnDistance = 2. * left * uturnDistanceFactor;
 	}
 	else {
 		uturnDistance = (left + right) * uturnDistanceFactor;
+		cornerUturnBool = true;
+	}
+	//minimum and miximum uturn distance
+	float maximumUturnDistance = 1.5;
+	float minimumUturnDistance = .8;
+	if(uturnDistance > maximumUturnDistance) {
+		uturnDistance = maximumUturnDistance;
+	}
+	if(uturnDistance < minimumUturnDistance) {
+		uturnDistance = minimumUturnDistance;
 	}
 
 	ROS_INFO_STREAM("uturnDistance: " << uturnDistance);
@@ -98,19 +122,30 @@ void MyBotController::scanCallback(const sensor_msgs::LaserScan& msg) {
 	ROS_INFO_STREAM(" diff: " << leftTurnHyp - (left * cos(theta)) << std::endl); //testing code
 
 	//robot decision condtionals
-	float skipUturnFactor = 3.; //if a turn should be made instead of uturnr
-	if(front < uturnDistance && left + right > skipUturnFactor * uturnDistance * front) {
-		//count = 0;
+	float skipUturnFactor = 2.; //if a turn should be made instead of uturnr
+	float cornerUturnDistance = .5; //indicates corner condition
+	ROS_INFO("R TEST: %d\n", front < uturnDistance && right > 2. * uturnDistance && left < 1.5 * uturnDistance);
+	if((front < uturnDistance && left + right < (skipUturnFactor / uturnDistanceFactor) * front) || (uturnDistance < cornerUturnDistance && cornerUturnBool)) {
+		wideCount = 0;
+		narrowCount = 0;
 		ROS_INFO("U-TURN"); //testing code
 		velMsg = uturn(left, right, leftUturnGuide, rightUturnGuide);
 	}
+	else if(front < uturnDistance && left > 1.5 * uturnDistance && right < 1.5 * uturnDistance) {
+		wideCount = 0;
+		narrowCount = 0;
+		ROS_INFO("LEFT U TURN ASSIST\n");
+		velMsg = leftUturnAssist();
+	}
 	else if(leftTurnHyp > left * cos(theta) + tolerance || (leftTurnHyp > 1.5 * leftTurnHypLong && leftTurnHypLong > 1.1 * front)) { // && (leftTurnHyp > 1.5 * front || leftTurnHyp > 1.5 * right))) {
-		count = 0;
+		wideCount = 0;
+		narrowCount = 0;
 		ROS_INFO("LEFT TURN\n"); //testing code
 		velMsg = leftTurn(leftTurnHyp);
 	}
-	else if(left < left + right && front < 2 * uturnDistance && right > left + right) {
-		count = 0;
+	else if(front < uturnDistance && right > 2. * uturnDistance && left < 1.5 * uturnDistance) {
+		wideCount = 0;
+		narrowCount = 0;
 		ROS_INFO("RIGHT TURN\n"); //testing code
 		velMsg = rightTurn();
 	}
@@ -124,7 +159,7 @@ void MyBotController::scanCallback(const sensor_msgs::LaserScan& msg) {
 
 geometry_msgs::Twist MyBotController::uturn(float left, float right, float leftUturnGuide, float rightUturnGuide) {
 	geometry_msgs::Twist velMsg;
-	 //husky
+
 	if(left > 3 * right) {
 		velMsg.angular.z = 3.;
 	}
@@ -139,38 +174,32 @@ geometry_msgs::Twist MyBotController::uturn(float left, float right, float leftU
 	}
 	velMsg.linear.x = -.7;
 
-	/*
-	//my_bot
-	velMsg.angular.z = -2.;
-	*/
 	return velMsg;
 }
 
 geometry_msgs::Twist MyBotController::leftTurn(float leftTurnHyp) {
 	geometry_msgs::Twist velMsg;
 
-	 //husky
-	velMsg.linear.x = .25;
-	velMsg.angular.z = 2./leftTurnHyp;
+	velMsg.linear.x = .45;
+	velMsg.angular.z = 0.9;
 	
-	/*
-	//my_bot
-	velMsg.linear.x = .1;
-	velMsg.angular.z = 1./leftTurnHyp;
-	*/
 	return velMsg;
 }
 
 geometry_msgs::Twist MyBotController::rightTurn() {
 	geometry_msgs::Twist velMsg;
-	/* //husky
-	velMsg.linear.x = 0;
-	velMsg.angular.z = -.8;
-	*/
 
-	//my_bot
-	velMsg.linear.x = 0;
-	velMsg.angular.z = -.8;
+	velMsg.linear.x = -.7;
+	velMsg.angular.z = -3.;
+	
+	return velMsg;
+}
+
+geometry_msgs::Twist MyBotController::leftUturnAssist() {
+	geometry_msgs::Twist velMsg;
+
+	velMsg.linear.x = -.7;
+	velMsg.angular.z = 3.;
 	
 	return velMsg;
 }
@@ -178,11 +207,11 @@ geometry_msgs::Twist MyBotController::rightTurn() {
 geometry_msgs::Twist MyBotController::centerHallway(float left, float right) {
 
 	//husky calibration constants. Must be modified experimentally.
-	float linearReflectionVel = .6;
-	float angularReflectionFactor = 1.7;
-	float linearCenterVel = .6;
+	float linearReflectionVel = .75;
+	float angularReflectionFactor = 1.0;
+	float linearCenterVel = .9;
 	float angularCenterVel = 0.;
-	float linearSideVel = .4;
+	float linearSideVel = .65;
 	float angularSideFactor = .09;
 	float maxSideDistance = 4;
 	float centerSpace = (left + right) / 8; 
@@ -202,21 +231,25 @@ geometry_msgs::Twist MyBotController::centerHallway(float left, float right) {
 	geometry_msgs::Twist velMsg;
 
 	//the following code creates a false wall on a right turn that should be skipped	
-	ROS_INFO_STREAM("prev width: " << prevWidth << "count: " << count << std::endl); //testing code
-	if(left + right > 1.05 * prevWidth) { 
-		right = prevWidth - left;
+	ROS_INFO_STREAM("prev width: " << prevWidth << " wideCount: " << wideCount << " narrowCount: " << narrowCount << std::endl); //testing code
+	if(left + right > 1.02 * prevWidth) {
+		if(wideCount < 500) { 
+			right = prevWidth - left;
+		}
+		else {
+			prevWidth += .1  * (left + right - prevWidth);
+			right = prevWidth - left;
+		 }
+		wideCount++;
+		narrowCount=0;
 	}
 	else {
-		if(count % 100 == 0 || prevWidth == INFINITY) {
+		if(narrowCount > 30) {
 			prevWidth = left + right;
 		}
-		else if(count > 100) {
-			if(1.1 * prevWidth >=  (left + right)) {
-				prevWidth = left + right;
-			}
-		}
+		narrowCount++;
+		wideCount = 0;
 	}
-	count++;
 	
 	//if robot is in the center, go straight forward
 	if (abs(left - right) < centerSpace) {
