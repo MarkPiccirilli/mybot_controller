@@ -26,5 +26,12 @@
 
 	<node name="gmapping" pkg="gmapping" type="slam_gmapping" output="screen" args="-scan $(arg scan)"/>
 
+	<!-- include file="$(find husky_navigation)/launch/gmapping.launch" /-->
+
+	<include file="$(find husky_navigation)/launch/move_base.launch" />
+
 	<node name="rviz" pkg="rviz" type="rviz" output="screen"/>
+
+	<node pkg="rqt_image_view" type="rqt_image_view" name="image_view" args="/mybot/camera1/image_raw"/>
+
 </launch>
