@@ -23,10 +23,6 @@ MyBotController::MyBotController(ros::NodeHandle& nodeHandle) :
 }
 
 
-MyBotController::~MyBotController()
-{
-}
-
 bool MyBotController::readParameters() {
 	//get scan topic name parameter
 	if(!nodeHandle.getParam("scanTopicName", scanTopicName)) {
